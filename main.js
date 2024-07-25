@@ -1,15 +1,23 @@
 const API_ID = "161e486c1da34563b3b7f707f268a6a9";
 let disposingPeer;
 let receivingPeer;
+let thirdPeer;
 
 let uid = String(Math.floor(Math.random() * 10000));
-let token
+let token;
+let query = window.location.search
+let urlParams = new URLSearchParams(query)
+let roomId = urlParams.get('room')
+
+if(!roomId){
+  window.location = 'lobby.html'
+}
 
 let client;
 let channel;
 let peerConnection;
 
-   const stun_server = {
+const stun_server = {
      iceServers: [
        {
          urls: "stun:3.70.112.130:3478",
@@ -17,17 +25,26 @@ let peerConnection;
      ],
    };
 
+  const contraints = {
+  video: {
+    width: {min: 640, ideal: 1920, max: 1920},
+    height: {min: 480, ideal: 1080, max: 1080},
+  },
+  audio: true
+}
 const initialize = async () => {
   client = await AgoraRTM.createInstance(API_ID);
   await client.login({ uid, token })
 
   //create channel 
-  channel = client.createChannel('main')
+  channel = client.createChannel(roomId);
   await channel.join()
   //checked if member has joined 
   channel.on('MemberJoined', handleMemberJoined)
+  channel.on('MemberLeft', handleUserLeft)
+
   client.on('MessageFromPeer', handleMessageFromPeer)
-  disposingPeer = await navigator.mediaDevices.getUserMedia({video: true, audio: true})
+  disposingPeer = await navigator.mediaDevices.getUserMedia(contraints)
   document.getElementById('user-1').srcObject = disposingPeer
 }
 
@@ -51,6 +68,10 @@ const handleMessageFromPeer = async (message, MemberId) => {
 
 }
 
+const handleUserLeft = async()=>{
+  document.getElementById('user-2').style.display = 'none';
+}
+
 const createPeerConnection = async (MemberId) => {
   peerConnection = new RTCPeerConnection(stun_server)
   receivingPeer = new MediaStream()
@@ -58,10 +79,7 @@ const createPeerConnection = async (MemberId) => {
   document.getElementById('user-2').style.display = 'block'
 
   if (!disposingPeer) {
-    disposingPeer = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
+    disposingPeer = await navigator.mediaDevices.getUserMedia(contraints);
     document.getElementById("user-1").srcObject = disposingPeer;
   }
 
@@ -105,5 +123,29 @@ const addAnswer = async(answer)=>{
     peerConnection.setRemoteDescription(answer)
   }
 }
+
+const toggleAudio = async()=>{
+  const audioTrack = disposingPeer.getTracks().find(track => track.kind === 'audio')
+  if(audioTrack.enabled){
+    audioTrack.enabled = false
+  }else{
+    audioTrack.enabled = true
+  }
+}
+const toggleVideo = async()=>{
+  const vidioTrack = disposingPeer.getTracks().find(track => track.kind === 'video')
+  if(vidioTrack.enabled){
+    vidioTrack.enabled = false
+  }else{
+    vidioTrack.enabled = true
+  }
+}
+
+const leaveChannel = async()=>{
+  await channel.leave()
+  await client.logout()
+}
+
+window.addEventListener('beforeunload', leaveChannel)
 
 initialize()
