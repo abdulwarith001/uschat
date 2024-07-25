@@ -1,7 +1,6 @@
 const API_ID = "161e486c1da34563b3b7f707f268a6a9";
 let disposingPeer;
 let receivingPeer;
-let thirdPeer;
 
 let uid = String(Math.floor(Math.random() * 10000));
 let token;
