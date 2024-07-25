@@ -27,7 +27,7 @@ const initialize = async () => {
   //checked if member has joined 
   channel.on('MemberJoined', handleMemberJoined)
   client.on('MessageFromPeer', handleMessageFromPeer)
-  disposingPeer = await navigator.mediaDevices.getUserMedia({video: true, audio: false})
+  disposingPeer = await navigator.mediaDevices.getUserMedia({video: true, audio: true})
   document.getElementById('user-1').srcObject = disposingPeer
 }
 
@@ -60,7 +60,7 @@ const createPeerConnection = async (MemberId) => {
   if (!disposingPeer) {
     disposingPeer = await navigator.mediaDevices.getUserMedia({
       video: true,
-      audio: false,
+      audio: true,
     });
     document.getElementById("user-1").srcObject = disposingPeer;
   }
